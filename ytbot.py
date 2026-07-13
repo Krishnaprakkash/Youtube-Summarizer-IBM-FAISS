@@ -279,10 +279,5 @@ with gr.Blocks() as interface:
     )
 
 port = int(os.environ.get("PORT", 7860))
-if os.environ.get("SPACE_ID"):
-    interface.launch()
-elif os.environ.get("RENDER"):
-    interface.launch(server_name="0.0.0.0", server_port=port)
-else:
-    interface.launch(server_name="127.0.0.1", server_port=7860, share=True)
+interface.launch(server_name="0.0.0.0", server_port=port)
 
