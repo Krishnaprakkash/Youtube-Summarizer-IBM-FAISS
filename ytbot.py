@@ -1,13 +1,7 @@
 import gradio as gr
 import re
 from youtube_transcript_api import YouTubeTranscriptApi
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings 
 import os
-from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 
 
@@ -39,6 +33,7 @@ def get_transcript(url):
     return transcript if transcript else None
 
 def chunk_transcript(transcript, chunk_size=500, chunk_overlap=20):
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap
@@ -63,6 +58,7 @@ def define_parameters():
     }
 
 def initialize_groq_llm(model_id, groq_api_key, parameters):
+    from langchain_groq import ChatGroq
     llm = ChatGroq(
         model=model_id,
         api_key=groq_api_key,
@@ -72,6 +68,7 @@ def initialize_groq_llm(model_id, groq_api_key, parameters):
     return llm
 
 def setup_embedding_model():
+    from langchain_huggingface import HuggingFaceEmbeddings
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     return embedding_model
 
@@ -82,6 +79,7 @@ def create_faiss_index(chunks, embedding_model):
     :param embedding_model: The embeddig model to use
     :return: FAISS index
     """
+    from langchain_community.vectorstores import FAISS
     return FAISS.from_texts(chunks, embedding_model)
 
 def perform_similarity_search(faiss_index, query, k=3):
@@ -101,6 +99,7 @@ def create_summary_prompt():
     Create a prompt template for summarizing a Youtube Video Transcript.
     :return: ChatPromptTemplate object
     """
+    from langchain_core.prompts import ChatPromptTemplate
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are an AI assistant tasked with summarizing YouTube video transcripts. Provide concise, informative summaries that capture the main points of the video content.
          Instructions:
@@ -122,6 +121,7 @@ def create_summary_chain(llm, prompt, verbose=True):
     :param verbose: Boolean to enable verbose output (default: True)
     :return: Runnable chain
     """
+    from langchain_core.output_parsers import StrOutputParser
     chain = prompt | llm | StrOutputParser()
     if verbose:
         print(f"Chain created: {prompt} -> {llm.model_name if hasattr(llm, 'model_name') else llm} -> StrOutputParser")
@@ -142,7 +142,7 @@ def create_qa_prompt_template():
     Based on the above context, please answer the following question: 
     Question: {question}
     """
-
+    from langchain_core.prompts import ChatPromptTemplate
     prompt_template = ChatPromptTemplate.from_messages([
         ("user", qa_template)
     ])
@@ -157,6 +157,7 @@ def create_qa_chain(llm, prompt_template, verbose=True):
     :param verbose: Whether to enable verbose output for the chain.
     :return: Runnable chain 
     """
+    from langchain_core.output_parsers import StrOutputParser
     chain = prompt_template | llm | StrOutputParser()
 
     if verbose:
